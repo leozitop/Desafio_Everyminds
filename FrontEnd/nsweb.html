@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nunes Sports CRUD</title>
+</head>
+<body>
+  <h1>Nunes Sports - CRUD de Produtos</h1>
+
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Código</th>
+        <th>Descrição</th>
+        <th>Preço</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="produtos-lista"></tbody>
+  </table>
+
+  <h2>Adicionar Produto</h2>
+  <form id="form-adicionar">
+    <label for="nome">Nome:</label>
+    <input type="text" id="nome" required>
+    <label for="codigo">Código:</label>
+    <input type="text" id="codigo" required>
+    <label for="descricao">Descrição:</label>
+    <input type="text" id="descricao" required>
+    <label for="preco">Preço:</label>
+    <input type="number" step="0.01" id="preco" required>
+    <button type="submit">Adicionar</button>
+  </form>
+
+  <script>
+    const listaProdutos = document.getElementById('produtos-lista');
+    const formAdicionar = document.getElementById('form-adicionar');
+
+    async function carregarProdutos() {
+      const response = await fetch('/api/produtos');
+      const produtos = await response.json();
+
+      listaProdutos.innerHTML = '';
+      produtos.forEach(produto => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${produto.nome}</td>
+          <td>${produto.codigo}</td>
+          <td>${produto.descricao}</td>
+          <td>${produto.preco}</td>
+          <td>
+            <button onclick="editarProduto(${produto.id})">Editar</button>
+            <button onclick="excluirProduto(${produto.id})">Excluir</button>
+          </td>
+        `;
+        listaProdutos.appendChild(row);
+      });
+    }
+
+    formAdicionar.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const nome = document.getElementById('nome').value;
+      const codigo = document.getElementById('codigo').value;
+      const descricao = document.getElementById('descricao').value;
+      const preco = document.getElementById('preco').value;
+
+      await fetch('/api/produtos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nome, codigo, descricao, preco }),
+      });
+
+      carregarProdutos();
+    });
+
+    async function editarProduto(id) {
+      const novoNome = prompt('Novo nome:');
+      if (novoNome !== null) {
+        await fetch(`/api/produtos/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ nome: novoNome }),
+        });
+        carregarProdutos();
+      }
+    }
+
+    async function excluirProduto(id) {
+      const confirmacao = confirm('Deseja realmente excluir o produto?');
+      if (confirmacao) {
+        await fetch(`/api/produtos/${id}`, {
+          method: 'DELETE',
+        });
+        carregarProdutos();
+      }
+    }
+
+    carregarProdutos();
+  </script>
+</body>
+</html>
